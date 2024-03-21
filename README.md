@@ -1,4 +1,4 @@
-# ruimarinho/bitcoin-core
+# lightninglabs/bitcoin-core
 
 A bitcoin-core docker image with support for the following platforms:
 
@@ -6,9 +6,12 @@ A bitcoin-core docker image with support for the following platforms:
 * `arm32v7` (armv7)
 * `arm64` (aarch64, armv8)
 
-[![ruimarinho/bitcoin-core][docker-pulls-image]][docker-hub-url] [![ruimarinho/bitcoin-core][docker-stars-image]][docker-hub-url] [![ruimarinho/bitcoin-core][docker-size-image]][docker-hub-url]
+[![lightninglabs/bitcoin-core][docker-pulls-image]][docker-hub-url] [![lightninglabs/bitcoin-core][docker-stars-image]][docker-hub-url] [![lightninglabs/bitcoin-core][docker-size-image]][docker-hub-url]
 
 ## Tags
+
+- `27.0`, `27` ([27/Dockerfile](https://github.com/lightninglabs/docker-bitcoin-core/blob/master/27/Dockerfile)) [**multi-arch**]
+- `27.0-alpine`, `27-alpine` ([27/alpine/Dockerfile](https://github.com/lightninglabs/docker-bitcoin-core/blob/master/27/alpine/Dockerfile))
 
 - `26.0`, `26` ([26/Dockerfile](https://github.com/ruimarinho/docker-bitcoin-core/blob/master/25/Dockerfile)) [**multi-arch**]
 - `26.0-alpine`, `26-alpine` ([26/alpine/Dockerfile](https://github.com/ruimarinho/docker-bitcoin-core/blob/master/25/alpine/Dockerfile))
