@@ -9,6 +9,8 @@ A bitcoin-core docker image with support for the following platforms:
 [![lightninglabs/bitcoin-core][docker-pulls-image]][docker-hub-url] [![lightninglabs/bitcoin-core][docker-stars-image]][docker-hub-url] [![lightninglabs/bitcoin-core][docker-size-image]][docker-hub-url]
 
 ## Tags
+- `28.0`, `28` ([28/Dockerfile](https://github.com/lightninglabs/docker-bitcoin-core/blob/master/28/Dockerfile)) [**multi-arch**]
+- `28.0-alpine`, `28-alpine` ([27/alpine/Dockerfile](https://github.com/lightninglabs/docker-bitcoin-core/blob/master/28/alpine/Dockerfile))
 
 - `27.0`, `27` ([27/Dockerfile](https://github.com/lightninglabs/docker-bitcoin-core/blob/master/27/Dockerfile)) [**multi-arch**]
 - `27.0-alpine`, `27-alpine` ([27/alpine/Dockerfile](https://github.com/lightninglabs/docker-bitcoin-core/blob/master/27/alpine/Dockerfile))
