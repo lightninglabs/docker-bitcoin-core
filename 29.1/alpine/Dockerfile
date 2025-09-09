@@ -1,41 +1,10 @@
-# Build stage for BerkeleyDB
-FROM alpine as berkeleydb
-
-RUN sed -i 's/http\:\/\/dl-cdn.alpinelinux.org/https\:\/\/alpine.global.ssl.fastly.net/g' /etc/apk/repositories
-RUN apk --no-cache add \
-  autoconf \
-  automake \
-  build-base \
-  libressl \
-  linux-headers \
-  wget \
-  tar
-
-ENV BERKELEYDB_VERSION=db-4.8.30.NC
-ENV BERKELEYDB_PREFIX=/opt/${BERKELEYDB_VERSION}
-
-RUN wget https://download.oracle.com/berkeley-db/${BERKELEYDB_VERSION}.tar.gz
-RUN tar -xzf *.tar.gz
-RUN sed s/__atomic_compare_exchange/__atomic_compare_exchange_db/g -i ${BERKELEYDB_VERSION}/dbinc/atomic.h
-RUN mkdir -p ${BERKELEYDB_PREFIX}
-
-WORKDIR /${BERKELEYDB_VERSION}/build_unix
-
-RUN ../dist/configure --enable-cxx --disable-shared --with-pic --with-mutex=POSIX/pthreads --prefix=${BERKELEYDB_PREFIX} --build=aarch64-unknown-linux-gnu
-RUN make -j4
-RUN make install
-RUN rm -rf ${BERKELEYDB_PREFIX}/docs
-
 # Build stage for Bitcoin Core
 FROM alpine as bitcoin-core
-
-COPY --from=berkeleydb /opt /opt
 
 ENV GNUPGHOME=/tmp/gnupg
 
 RUN sed -i 's/http\:\/\/dl-cdn.alpinelinux.org/https\:\/\/alpine.global.ssl.fastly.net/g' /etc/apk/repositories
-RUN apk --no-cache add autoconf
-RUN apk --no-cache add automake
+RUN apk --no-cache add cmake
 RUN apk --no-cache add boost-dev
 RUN apk --no-cache add build-base
 RUN apk --no-cache add chrpath
@@ -63,6 +32,13 @@ RUN set -ex \
   C388F6961FB972A95678E327F62711DBDCA8AE56 \
   9DEAE0DC7063249FB05474681E4AED62986CD25D \
   D1DBF2C4B96F2DEBF4C16654410108112E7EA81F \
+  F4FC70F07310028424EFC20A8E4256593F177720 \
+  E61773CD6E01040E2F1BD78CE7E2984B6289C93A \
+  9D3CC86A72F8494342EA5FD10A41BDC3F4FAFF1C \
+  33C103B4B2794170546CCF7BCFB2C83C66CD792A \
+  0CCBAAFD76A2ECE2CCD3141DE2FFD5B1D88CA97D \
+  F2CFC4ABD0B99D837EEBB7D09B79B45691DB4173 \
+  0AD83877C1F0CD1EE9BD660AD7CC770B81FD22A8 \
   ; do \
   gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$key" || \
   gpg --batch --keyserver keys.openpgp.org --recv-keys "$key" || \
@@ -71,35 +47,31 @@ RUN set -ex \
   gpg --batch --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys "$key" ; \
   done
 
-ENV BITCOIN_VERSION=28.0
-ENV BITCOIN_PREFIX=/opt/bitcoin-${BITCOIN_VERSION}
+# Special variables just for release candidates, both should be empty for stable
+# releases.
+ARG RC
+ARG RC_DIR
 
-RUN wget https://bitcoincore.org/bin/bitcoin-core-${BITCOIN_VERSION}/SHA256SUMS
-RUN wget https://bitcoincore.org/bin/bitcoin-core-${BITCOIN_VERSION}/SHA256SUMS.asc
-RUN wget https://bitcoincore.org/bin/bitcoin-core-${BITCOIN_VERSION}/bitcoin-${BITCOIN_VERSION}.tar.gz
+ENV BITCOIN_VERSION=29.1
+ENV BITCOIN_PREFIX=/opt/bitcoin-${BITCOIN_VERSION}${RC}
+
+RUN wget https://bitcoincore.org/bin/bitcoin-core-${BITCOIN_VERSION}/${RC_DIR}SHA256SUMS
+RUN wget https://bitcoincore.org/bin/bitcoin-core-${BITCOIN_VERSION}/${RC_DIR}SHA256SUMS.asc
+RUN wget https://bitcoincore.org/bin/bitcoin-core-${BITCOIN_VERSION}/${RC_DIR}bitcoin-${BITCOIN_VERSION}${RC}.tar.gz
 RUN gpg --verify SHA256SUMS.asc SHA256SUMS
-RUN grep " bitcoin-${BITCOIN_VERSION}.tar.gz\$" SHA256SUMS | sha256sum -c -
+RUN grep " bitcoin-${BITCOIN_VERSION}${RC}.tar.gz\$" SHA256SUMS | sha256sum -c -
 RUN tar -xzf *.tar.gz
 
-WORKDIR /bitcoin-${BITCOIN_VERSION}
+WORKDIR /bitcoin-${BITCOIN_VERSION}${RC}
 
-RUN sed -i s:sys/fcntl.h:fcntl.h: src/compat/compat.h
-RUN ./autogen.sh
-RUN ./configure LDFLAGS=-L`ls -d /opt/db*`/lib/ CPPFLAGS=-I`ls -d /opt/db*`/include/ \
-  --prefix=${BITCOIN_PREFIX} \
-  --mandir=/usr/share/man \
-  --disable-tests \
-  --disable-bench \
-  --disable-ccache \
-  --with-gui=no \
-  --with-utils \
-  --with-libs \
-  --with-sqlite=yes \
-  --with-daemon
-RUN make -j4
-RUN make install
+RUN cmake -B build \
+    -DWITH_QRENCODE=OFF \
+    -DBUILD_TESTS=OFF \
+    -DWITH_ZMQ=ON \
+    -DCMAKE_INSTALL_PREFIX=${BITCOIN_PREFIX}
+RUN cmake --build build -j4
+RUN cmake --install build
 RUN strip ${BITCOIN_PREFIX}/bin/bitcoin-cli
-RUN strip ${BITCOIN_PREFIX}/bin/bitcoin-tx
 RUN strip ${BITCOIN_PREFIX}/bin/bitcoind
 
 # Build stage for compiled artifacts
@@ -125,9 +97,14 @@ RUN apk --no-cache add \
   sqlite-dev \
   su-exec
 
+# Special variables just for release candidates, both should be empty for stable
+# releases.
+# ENV RC=
+# ENV RC_DIR=
+
 ENV BITCOIN_DATA=/home/bitcoin/.bitcoin
-ENV BITCOIN_VERSION=28.0
-ENV BITCOIN_PREFIX=/opt/bitcoin-${BITCOIN_VERSION}
+ENV BITCOIN_VERSION=29.1
+ENV BITCOIN_PREFIX=/opt/bitcoin-${BITCOIN_VERSION}${RC}
 ENV PATH=${BITCOIN_PREFIX}/bin:$PATH
 
 COPY --from=bitcoin-core /opt /opt
@@ -139,6 +116,6 @@ EXPOSE 8332 8333 18332 18333 18444
 
 ENTRYPOINT ["/entrypoint.sh"]
 
-RUN bitcoind -version | grep "Bitcoin Core version v${BITCOIN_VERSION}"
+RUN bitcoind -version | grep "Bitcoin Core daemon version v${BITCOIN_VERSION}"
 
 CMD ["bitcoind"]

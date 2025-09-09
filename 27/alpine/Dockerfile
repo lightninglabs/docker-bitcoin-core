@@ -2,10 +2,14 @@
 FROM alpine as berkeleydb
 
 RUN sed -i 's/http\:\/\/dl-cdn.alpinelinux.org/https\:\/\/alpine.global.ssl.fastly.net/g' /etc/apk/repositories
-RUN apk --no-cache add autoconf
-RUN apk --no-cache add automake
-RUN apk --no-cache add build-base
-RUN apk --no-cache add libressl
+RUN apk --no-cache add \
+  autoconf \
+  automake \
+  build-base \
+  libressl \
+  linux-headers \
+  wget \
+  tar
 
 ENV BERKELEYDB_VERSION=db-4.8.30.NC
 ENV BERKELEYDB_PREFIX=/opt/${BERKELEYDB_VERSION}
@@ -17,7 +21,7 @@ RUN mkdir -p ${BERKELEYDB_PREFIX}
 
 WORKDIR /${BERKELEYDB_VERSION}/build_unix
 
-RUN ../dist/configure --enable-cxx --disable-shared --with-pic --prefix=${BERKELEYDB_PREFIX} --build=aarch64-unknown-linux-gnu
+RUN ../dist/configure --enable-cxx --disable-shared --with-pic --with-mutex=POSIX/pthreads --prefix=${BERKELEYDB_PREFIX} --build=aarch64-unknown-linux-gnu
 RUN make -j4
 RUN make install
 RUN rm -rf ${BERKELEYDB_PREFIX}/docs
