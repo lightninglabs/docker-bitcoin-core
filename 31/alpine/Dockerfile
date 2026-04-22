@@ -52,7 +52,7 @@ RUN set -ex \
 ARG RC
 ARG RC_DIR
 
-ENV BITCOIN_VERSION=30.2
+ENV BITCOIN_VERSION=31.0
 ENV BITCOIN_PREFIX=/opt/bitcoin-${BITCOIN_VERSION}${RC}
 
 RUN wget https://bitcoincore.org/bin/bitcoin-core-${BITCOIN_VERSION}/${RC_DIR}SHA256SUMS
@@ -94,6 +94,7 @@ RUN apk --no-cache add \
   boost-filesystem \
   boost-system \
   boost-thread \
+  gosu \
   libevent \
   libzmq \
   shadow \
@@ -106,12 +107,13 @@ ENV RC=${RC}
 ENV RC_DIR=${RC_DIR}
 
 ENV BITCOIN_DATA=/home/bitcoin/.bitcoin
-ENV BITCOIN_VERSION=30.2
+ENV BITCOIN_VERSION=31.0
 ENV BITCOIN_PREFIX=/opt/bitcoin-${BITCOIN_VERSION}${RC}
 ENV PATH=${BITCOIN_PREFIX}/bin:$PATH
 
 COPY --from=bitcoin-core /opt /opt
 COPY docker-entrypoint.sh /entrypoint.sh
+RUN sed -i '1s|/bin/bash|/bin/sh|' /entrypoint.sh
 
 VOLUME ["/home/bitcoin/.bitcoin"]
 
