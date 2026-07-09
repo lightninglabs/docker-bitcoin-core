@@ -8,6 +8,8 @@ jobs:
     strategy:
       matrix:
         version:
+          - '31.1'
+          - '31.1/alpine'
           - '31'
           - '31/alpine'
           - '30'
@@ -16,10 +18,6 @@ jobs:
           - '29.1/alpine'
           - '29'
           - '29/alpine'
-          - '28'
-          - '28/alpine'
-          - '27'
-          - '27/alpine'
       fail-fast: false
     steps:
       - name: Set up Docker Buildx
