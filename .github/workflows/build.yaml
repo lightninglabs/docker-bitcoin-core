@@ -14,10 +14,10 @@ jobs:
           - '31/alpine'
           - '30'
           - '30/alpine'
+          - '29.4'
+          - '29.4/alpine'
           - '29.1'
           - '29.1/alpine'
-          - '29'
-          - '29/alpine'
       fail-fast: false
     steps:
       - name: Set up Docker Buildx
