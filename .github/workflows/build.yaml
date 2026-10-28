@@ -8,6 +8,8 @@ jobs:
     strategy:
       matrix:
         version:
+          - '31.2'
+          - '31.2/alpine'
           - '31.1'
           - '31.1/alpine'
           - '31'
