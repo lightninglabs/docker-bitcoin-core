@@ -8,12 +8,20 @@ jobs:
     strategy:
       matrix:
         version:
+          - '32.1'
+          - '32.1/alpine'
+          - '31.2'
+          - '31.2/alpine'
           - '31.1'
           - '31.1/alpine'
           - '31'
           - '31/alpine'
+          - '30.4'
+          - '30.4/alpine'
           - '30'
           - '30/alpine'
+          - '29.5'
+          - '29.5/alpine'
           - '29.4'
           - '29.4/alpine'
           - '29.1'
