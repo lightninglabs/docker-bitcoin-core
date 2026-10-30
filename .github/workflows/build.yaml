@@ -56,14 +56,10 @@ jobs:
               TAGS+=("$REPO:$TAG")
             fi
 
-            if [ $(version ${TAG}) -ge $(version "22.0") ]; then
-              TAG_MAJOR_MINOR=$(echo $TAG | cut -c -2)"
-            else
-              TAG_MAJOR_MINOR=$(echo $TAG | cut -c -4)"
-            fi
-
-            if [ $(version ${TAG_MAJOR_MINOR}) -ne $(version ${BITCOIN_VERSION}) ]; then
-              echo "Skipping build of base image $BITCOIN_VERSION/ as ${TAG} is targeted at ${TAG_MAJOR_MINOR}/"
+            # Match the actual release: directory 30/ can contain version 30.2.
+            RELEASE_VERSION=$(sed -n 's/^ENV BITCOIN_VERSION=//p' "${BITCOIN_VERSION}/Dockerfile" | sort -u)
+            if [[ "$TAG" != "$RELEASE_VERSION" ]]; then
+              echo "Skipping $BITCOIN_VERSION/: release $RELEASE_VERSION does not match tag $TAG"
               exit 0
             fi
           else
@@ -95,14 +91,14 @@ jobs:
           echo ::set-output name=tags::${TAGS[@]}
           echo ::set-output name=build::true
 
-      - if: ${{ steps.prepare.outputs.build }} == 'true'
+      - if: ${{ steps.prepare.outputs.build == 'true' }}
         name: Login into Docker Hub
         uses: lightninglabs/gh-actions/login-action@2021.01.25.00
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_API_KEY }}
 
-      - if: ${{ steps.prepare.outputs.build }} == 'true'
+      - if: ${{ steps.prepare.outputs.build == 'true' }}
         name: Build Docker image
         run: |
           TAGS=(${{ steps.prepare.outputs.tags }})
@@ -128,7 +124,7 @@ jobs:
             $(printf "%s" "${TAGS[@]/#/ --tag }" ) \
             ${{ matrix.version }}/
 
-      - if:  ${{ steps.prepare.outputs.build }} == 'true'
+      - if:  ${{ steps.prepare.outputs.build == 'true' }}
         name: Clear Docker credentials
         run: |
           rm -f ${HOME}/.docker/config.json
